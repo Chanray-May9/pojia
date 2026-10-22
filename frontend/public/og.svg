@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="破甲论坛 POJIA FORUM">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#eef6ff"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.85" cy="0.1" r="0.7">
+      <stop offset="0" stop-color="#0a84ff" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#0a84ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <g transform="translate(88 96)" fill="none" stroke="#0a84ff" stroke-width="3" stroke-linejoin="round">
+    <path d="M44 2 92 18v44c0 27-19 44-48 52C15 106-4 89-4 62V18Z" fill="#ffffff"/>
+    <path d="M44 8v96" stroke-width="2" opacity="0.35"/>
+    <path d="M8 54 80 33" stroke-width="7" stroke-linecap="square"/>
+    <circle cx="44" cy="63" r="13" stroke-width="3"/>
+  </g>
+  <text x="212" y="142" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif" font-size="72" font-weight="700" fill="#0d1726" letter-spacing="4">破甲论坛</text>
+  <text x="214" y="186" font-family="'SFMono-Regular', Consolas, monospace" font-size="17" fill="#8691a4" letter-spacing="6">POJIA · AI SECURITY RESEARCH</text>
+  <line x1="88" y1="238" x2="1112" y2="238" stroke="#e3e8f0" stroke-width="1"/>
+  <text x="88" y="318" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif" font-size="44" font-weight="600" fill="#0d1726">AI 越狱与提示词攻防研究社区</text>
+  <text x="88" y="376" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif" font-size="23" fill="#56637b">可复现的实验 · 可量化的评估 · 负责任的披露</text>
+  <g font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif" font-size="17" fill="#56637b">
+    <text x="88" y="482">越狱研究</text>
+    <text x="228" y="482">提示词注入</text>
+    <text x="388" y="482">红队评估</text>
+    <text x="528" y="482">防御与对齐</text>
+    <text x="688" y="482">漏洞披露</text>
+  </g>
+  <g fill="none" stroke="#0a84ff" stroke-width="1.5" opacity="0.55">
+    <path d="M88 500h180"/>
+    <path d="M310 500h180"/>
+    <path d="M530 500h180"/>
+    <path d="M750 500h180"/>
+  </g>
+  <text x="1112" y="560" text-anchor="end" font-family="'SFMono-Regular', Consolas, monospace" font-size="16" fill="#8691a4">STATIC FRONTEND · CLOUDFLARE API</text>
+</svg>

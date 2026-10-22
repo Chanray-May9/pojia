@@ -1,0 +1,107 @@
+name: Deploy static site to GitHub Pages
+
+# 构建并发布 frontend/dist 到 GitHub Pages。
+#
+# 用途：GitHub Pages 前端是纯静态镜像（SSG 产物），所有动交互（登录/发帖/回复/搜索）
+# 仍调用 Cloudflare Worker API。公开页面在构建期就写入 HTML，因此可被搜索引擎收录。
+#
+# 触发方式：
+#   - push 到 main：内容更新后立即重建
+#   - schedule：每小时重建一次，把 API 里的新帖同步到静态站（GitHub Pages 无服务端）
+#   - workflow_dispatch：手动触发（例如改了仓库 Variables 后）
+#
+# 前置配置（仓库 Settings → Secrets and variables → Actions → Variables）：
+#   API_BASE = https://pojia-api.<your-subdomain>.workers.dev   # 或 https://api.example.com
+#              形如协议 + 主机名，不要带结尾斜杠和 /api。
+#   SITE_URL = https://<owner>.github.io/<repo>                 # GitHub Pages 项目站点
+#              或 https://pojia.example.com（绑定自定义域后）
+#              形如协议 + 主机名 [+ 仓库子路径]，不要带结尾斜杠。
+#              构建脚本会解析其 pathname 作为 base path，从而生成正确的相对链接与 canonical。
+#   未配置这两个 Variables 时，下面的校验步骤会直接失败并给出明确报错（避免发布空 SITE_URL 的站点）。
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # 每小时第 17 分钟重建，避开整点高峰；静态站需要定时重建才能把新帖收录进 sitemap/RSS
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+# GitHub Pages 部署所需的最小权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只允许一个 Pages 部署；不取消进行中的部署，避免半成品
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build static site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Validate repository variables
+        env:
+          API_BASE: ${{ vars.API_BASE }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          set -eu
+          fail=0
+          if [ -z "${API_BASE:-}" ]; then
+            echo "::error::仓库 Variable API_BASE 未配置。请在 Settings → Secrets and variables → Actions → Variables 添加，例如 https://pojia-api.example.workers.dev"
+            fail=1
+          elif ! printf '%s' "$API_BASE" | grep -Eq '^https?://[^/]+$'; then
+            echo "::error::API_BASE 格式应为 https://host（无结尾斜杠、无 /api 后缀），当前为：$API_BASE"
+            fail=1
+          fi
+          if [ -z "${SITE_URL:-}" ]; then
+            echo "::error::仓库 Variable SITE_URL 未配置。项目站点形如 https://<owner>.github.io/<repo>，自定义域形如 https://pojia.example.com"
+            fail=1
+          elif ! printf '%s' "$SITE_URL" | grep -Eq '^https?://[^ ]+$'; then
+            echo "::error::SITE_URL 格式应为 https://host[/path]（无结尾斜杠），当前为：$SITE_URL"
+            fail=1
+          fi
+          if [ "$fail" -ne 0 ]; then
+            echo "构建中止：请先修正仓库 Variables（这些值不是 Secret，公开可见即可）。"
+            exit 1
+          fi
+          echo "API_BASE=$API_BASE"
+          echo "SITE_URL=$SITE_URL"
+
+      - name: Build frontend/dist
+        env:
+          API_BASE: ${{ vars.API_BASE }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: node frontend/build.mjs
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

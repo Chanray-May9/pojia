@@ -1,0 +1,15 @@
+{
+  "name": "pojia-forum",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "破甲论坛 —— AI 越狱与提示词攻防研究社区（Cloudflare Worker + D1 API，静态双前端 SSG）",
+  "engines": { "node": ">=22.5" },
+  "scripts": {
+    "start": "node backend/local-server.mjs",
+    "preview": "node frontend/serve.mjs",
+    "build": "node frontend/build.mjs",
+    "demo": "node scripts/demo-data.mjs",
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,44 @@
+# 破甲论坛 · Cloudflare Worker + D1 配置
+#
+# 本文件位于 deploy/ 目录，Wrangler 会以「配置文件所在目录」为基准解析相对路径：
+#   - main 指向 ../backend/worker.mjs（仓库根目录下的 backend/）
+#   - migrations_dir 指向 ./migrations（即 deploy/migrations/）
+#
+# 常用命令（在仓库根目录执行，均带 --config 指定本文件）：
+#   npx wrangler d1 create pojia --config deploy/wrangler.toml
+#   npx wrangler d1 migrations apply pojia --remote --config deploy/wrangler.toml
+#   npx wrangler secret put APP_SECRET --config deploy/wrangler.toml
+#   npx wrangler deploy --config deploy/wrangler.toml
+#
+# 敏感值（APP_SECRET）不要写进本文件：用 `wrangler secret put APP_SECRET` 写入，
+# 值会保存在 Cloudflare 加密的 Worker Secret 中，不进入仓库。
+# 建议生成高强度随机值：`node -e "console.log(crypto.randomUUID()+crypto.randomUUID())"`
+
+name = "pojia-api"
+main = "../backend/worker.mjs"
+compatibility_date = "2026-06-01"
+
+# 自定义域（可选，需要该域名的 NS 托管在同一个 Cloudflare 账号下）。
+# 取消注释并把 api.example.com 换成自己的子域；也可以直接在 Dashboard 绑定。
+# routes = [{ pattern = "api.example.com", custom_domain = true }]
+
+[[d1_databases]]
+binding = "DB"                          # 与 backend 代码中的 env.DB 对应，勿改
+database_name = "pojia"                 # `wrangler d1 create pojia` 时使用的名字
+database_id = "059dc67a-1113-4b4e-8643-6a7c5cb9f190"      # 创建 D1 后把返回的 database_id 粘贴到这里
+migrations_dir = "migrations"           # 相对本配置文件：deploy/migrations/
+
+[vars]
+# 非敏感运行时配置。敏感值（APP_SECRET）请用 secret，不要写在这里。
+SITE_NAME = "破甲论坛"
+# 允许跨域的前端来源，逗号分隔；本地开发用 *，线上务必收敛为两个前端域名。
+# 例：ALLOWED_ORIGINS = "https://<owner>.github.io,https://pojia.example.com"
+ALLOWED_ORIGINS = "https://chanray-may9.github.io,https://pojia-016.pages.dev"
+# PBKDF2 迭代次数：Workers 免费版 CPU 时间有限，60000 是本地与线上的折中值；
+# 生产环境建议使用 Workers Paid（CPU 上限更高）后再上调。
+PASSWORD_ITERATIONS = "60000"
+ENVIRONMENT = "production"
+
+# 可选：Workers 可观测性（日志）。免费版有限额，默认开启便于排查。
+[observability]
+enabled = true
