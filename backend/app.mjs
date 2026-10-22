@@ -51,7 +51,7 @@ function corsHeaders(request, env) {
   return {
     'Access-Control-Allow-Origin': origin,
     Vary: 'Origin',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type,Authorization',
     'Access-Control-Max-Age': '86400',
   };
@@ -919,6 +919,78 @@ route('POST', '/api/v1/threads/:id/report', async (ctx) => {
   return json({ ok: true });
 });
 
+/* admin console ----------------------------------------------------------- */
+async function requireAdmin(ctx) {
+  if (!ctx.auth.user) return apiError(401, 'unauthorized', '请先登录');
+  if (ctx.auth.user.role !== 'admin') return apiError(403, 'forbidden', '需要站务权限');
+  return null;
+}
+
+route('GET', '/api/v1/admin/threads', async (ctx) => {
+  const denied = await requireAdmin(ctx);
+  if (denied) return denied;
+  const filter = (ctx.url.searchParams.get('filter') || 'all').trim();
+  const where = [];
+  if (filter === 'pending') where.push("t.verification = 'self'");
+  if (filter === 'locked') where.push('t.locked = 1');
+  if (filter === 'reported') where.push('EXISTS (SELECT 1 FROM reports r WHERE r.target_type = \'thread\' AND r.target_id = t.id AND r.status = \'open\')');
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const rows = await all(
+    ctx.env.DB,
+    `${THREAD_SELECT} ${whereSql} ORDER BY t.pinned DESC, t.last_post_at DESC LIMIT 100`
+  );
+  const openReports = await first(ctx.env.DB, "SELECT COUNT(*) AS n FROM reports WHERE status = 'open'");
+  return json({ threads: rows.map((t) => serializeThread(t, { includeBody: false })), open_reports: Number(openReports?.n || 0) });
+});
+
+route('GET', '/api/v1/admin/reports', async (ctx) => {
+  const denied = await requireAdmin(ctx);
+  if (denied) return denied;
+  const rows = await all(
+    ctx.env.DB,
+    `SELECT r.id, r.target_type, r.target_id, r.reason, r.status, r.created_at,
+            u.username AS reporter, t.title AS thread_title, t.slug AS thread_slug
+     FROM reports r LEFT JOIN users u ON u.id = r.reporter_id
+     LEFT JOIN threads t ON t.id = r.target_id
+     ORDER BY r.status ASC, r.id DESC LIMIT 100`
+  );
+  return json({ reports: rows.map((r) => ({ ...r, id: Number(r.id), target_id: Number(r.target_id) })) });
+});
+
+route('POST', '/api/v1/admin/threads/:id/lock', async (ctx) => {
+  const denied = await requireAdmin(ctx);
+  if (denied) return denied;
+  const id = Number(ctx.params.id);
+  if (!Number.isInteger(id) || id <= 0) return apiError(400, 'invalid_id', '主题 id 非法');
+  const { data, error } = await readJson(ctx.request);
+  if (error) return error;
+  const locked = data.locked ? 1 : 0;
+  const info = await run(ctx.env.DB, 'UPDATE threads SET locked = ? WHERE id = ?', locked, id);
+  if (!info.changes) return apiError(404, 'not_found', '主题不存在');
+  return json({ ok: true, locked: Boolean(locked) });
+});
+
+route('DELETE', '/api/v1/admin/threads/:id', async (ctx) => {
+  const denied = await requireAdmin(ctx);
+  if (denied) return denied;
+  const id = Number(ctx.params.id);
+  if (!Number.isInteger(id) || id <= 0) return apiError(400, 'invalid_id', '主题 id 非法');
+  await run(ctx.env.DB, 'DELETE FROM posts WHERE thread_id = ?', id);
+  const info = await run(ctx.env.DB, 'DELETE FROM threads WHERE id = ?', id);
+  if (!info.changes) return apiError(404, 'not_found', '主题不存在');
+  await run(ctx.env.DB, "UPDATE reports SET status = 'closed' WHERE target_type = 'thread' AND target_id = ?", id);
+  return json({ ok: true });
+});
+
+route('POST', '/api/v1/admin/reports/:id/close', async (ctx) => {
+  const denied = await requireAdmin(ctx);
+  if (denied) return denied;
+  const id = Number(ctx.params.id);
+  const info = await run(ctx.env.DB, "UPDATE reports SET status = 'closed' WHERE id = ?", id);
+  if (!info.changes) return apiError(404, 'not_found', '举报不存在');
+  return json({ ok: true });
+});
+
 /* models catalog ---------------------------------------------------------- */
 route('GET', '/api/v1/models', async () =>
   json({
@@ -941,7 +1013,7 @@ export async function handleApi(request, env, ctx = {}) {
       status: 204,
       headers: {
         ...cors,
-        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type,Authorization',
         'Access-Control-Max-Age': '86400',
       },

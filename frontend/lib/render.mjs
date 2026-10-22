@@ -158,6 +158,7 @@ ${ld ? `<script type="application/ld+json">${ld}</script>` : ''}
         </span>
         <span data-auth-only hidden>
           <a class="account-name" data-auth-user href="${l('latest/')}">我的账号</a>
+          <a class="nav-link nav-admin" data-admin-only hidden href="${l('admin/')}">管理</a>
           <button type="button" class="link-button" data-logout>退出</button>
         </span>
       </div>
@@ -1137,6 +1138,44 @@ export function newCategoryPage() {
     canonical: pagePath,
     robots: 'noindex,nofollow',
     bodyAttrs: 'data-page="new-category"',
+    content,
+  });
+}
+
+export function adminPage() {
+  const pagePath = '/admin/';
+  const content = `<div class="wrap">
+    ${breadcrumbs(pagePath, [{ name: '首页', path: '' }, { name: '管理后台', path: pagePath }])}
+    <div class="page-head">
+      <div class="eyebrow">ADMIN / 站务</div>
+      <h1>管理后台</h1>
+      <p>复核实机验证、锁定主题、处理举报。仅管理员可见。</p>
+    </div>
+    <div class="admin-panel" data-admin-root>
+      <div class="notice" data-admin-notice>正在检查管理员权限…</div>
+      <div data-admin-content hidden>
+        <div class="admin-toolbar">
+          <div class="admin-filters" role="tablist">
+            <button class="admin-filter is-active" data-admin-filter="pending">待实机复核</button>
+            <button class="admin-filter" data-admin-filter="all">全部主题</button>
+            <button class="admin-filter" data-admin-filter="locked">已锁定</button>
+            <button class="admin-filter" data-admin-filter="reported">被举报</button>
+          </div>
+          <span class="admin-count" data-admin-count></span>
+        </div>
+        <div class="admin-list" data-admin-list></div>
+        <h2 class="admin-subhead">举报处理</h2>
+        <div class="admin-list" data-admin-reports></div>
+      </div>
+    </div>
+  </div>`;
+  return pageShell({
+    pagePath,
+    title: `管理后台 · ${BRAND.productName}`,
+    description: '破甲论坛站务管理后台。',
+    canonical: pagePath,
+    robots: 'noindex,nofollow',
+    bodyAttrs: 'data-page="admin"',
     content,
   });
 }

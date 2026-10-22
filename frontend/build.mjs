@@ -24,6 +24,7 @@ import {
   threadPage,
   userPage,
   newCategoryPage,
+  adminPage,
   aboutPage,
   searchPage,
   newThreadPage,
@@ -241,6 +242,7 @@ async function main() {
   writeFile('search/index.html', searchPage());
   writeFile('new/index.html', newThreadPage({ categories }));
   writeFile('category/new/index.html', newCategoryPage());
+  writeFile('admin/index.html', adminPage());
   writeFile('login/index.html', authPage({ mode: 'login' }));
   writeFile('register/index.html', authPage({ mode: 'register' }));
   writeFile('404.html', notFoundPage());
@@ -275,6 +277,7 @@ Disallow: /login/
 Disallow: /register/
 Disallow: /new/
 Disallow: /404.html
+Disallow: /admin/
 
 User-agent: Baiduspider
 Allow: /

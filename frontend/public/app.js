@@ -84,7 +84,9 @@
       nameEl.textContent = user.username;
       nameEl.setAttribute('href', SITE_BASE + 'u/' + encodeURIComponent(user.username) + '/');
     }
-
+    Array.prototype.forEach.call(document.querySelectorAll('[data-admin-only]'), function (el) {
+      setHidden(el, !user || user.role !== 'admin');
+    });
   }
 
   function showFormError(form, message, fields) {
@@ -424,6 +426,166 @@
       .catch(function () {});
   }
 
+  function initAdminPage() {
+    if (document.body.getAttribute('data-page') !== 'admin') return;
+    var notice = document.querySelector('[data-admin-notice]');
+    var content = document.querySelector('[data-admin-content]');
+    var listBox = document.querySelector('[data-admin-list]');
+    var reportBox = document.querySelector('[data-admin-reports]');
+    var countEl = document.querySelector('[data-admin-count]');
+    if (!notice || !content || !listBox) return;
+
+    function showNotice(text) {
+      notice.textContent = text;
+      setHidden(notice, false);
+      setHidden(content, true);
+    }
+
+    function rowFor(thread) {
+      var row = document.createElement('div');
+      row.className = 'admin-row';
+      var main = document.createElement('div');
+      main.className = 'admin-row-main';
+      var title = document.createElement('a');
+      title.className = 'admin-row-title';
+      title.href = SITE_BASE + String(thread.path).replace(/^\/+/, '');
+      title.textContent = thread.title;
+      var meta = document.createElement('div');
+      meta.className = 'admin-row-meta';
+      meta.textContent =
+        '#' + thread.id + ' · ' + thread.author + ' · ' + thread.category_name + ' · ' +
+        (thread.verification === 'admin' ? '已复核' : thread.verification === 'self' ? '作者自述' : '未标注') +
+        ' · ' + thread.reply_count + ' 回复' + (thread.locked ? ' · 已锁定' : '');
+      main.appendChild(title);
+      main.appendChild(meta);
+      var actions = document.createElement('div');
+      actions.className = 'admin-row-actions';
+
+      function btn(label, cls, fn) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn btn-sm ' + cls;
+        b.textContent = label;
+        b.addEventListener('click', fn);
+        return b;
+      }
+
+      if (thread.verification !== 'admin') {
+        actions.appendChild(btn('复核通过', 'btn-signal', function () {
+          request('threads/' + thread.id + '/verify', { method: 'POST', body: { verification: 'admin' }, auth: true })
+            .then(function () { load(currentFilter); })
+            .catch(function () {});
+        }));
+      } else {
+        actions.appendChild(btn('取消复核', 'btn-ghost', function () {
+          request('threads/' + thread.id + '/verify', { method: 'POST', body: { verification: 'none' }, auth: true })
+            .then(function () { load(currentFilter); })
+            .catch(function () {});
+        }));
+      }
+      actions.appendChild(btn(thread.locked ? '解锁' : '锁定', 'btn-ghost', function () {
+        request('admin/threads/' + thread.id + '/lock', { method: 'POST', body: { locked: !thread.locked }, auth: true })
+          .then(function () { load(currentFilter); })
+          .catch(function () {});
+      }));
+      actions.appendChild(btn('删除', 'btn-danger', function () {
+        if (!window.confirm('确定删除主题「' + thread.title + '」？不可恢复。')) return;
+        request('admin/threads/' + thread.id, { method: 'DELETE', auth: true })
+          .then(function () { load(currentFilter); loadReports(); })
+          .catch(function () {});
+      }));
+      row.appendChild(main);
+      row.appendChild(actions);
+      return row;
+    }
+
+    var currentFilter = 'pending';
+    function load(filter) {
+      currentFilter = filter;
+      Array.prototype.forEach.call(document.querySelectorAll('[data-admin-filter]'), function (b) {
+        b.classList.toggle('is-active', b.getAttribute('data-admin-filter') === filter);
+      });
+      listBox.innerHTML = '<div class="admin-loading">加载中…</div>';
+      request('admin/threads?filter=' + encodeURIComponent(filter), { auth: true }).then(function (res) {
+        listBox.innerHTML = '';
+        if (!res.ok) {
+          listBox.textContent = (res.data && res.data.message) || '加载失败';
+          return;
+        }
+        var threads = (res.data && res.data.threads) || [];
+        if (countEl) countEl.textContent = '共 ' + threads.length + ' 条 · 待处理举报 ' + (res.data.open_reports || 0);
+        if (!threads.length) {
+          var empty = document.createElement('div');
+          empty.className = 'admin-empty';
+          empty.textContent = '没有符合条件的主题。';
+          listBox.appendChild(empty);
+          return;
+        }
+        threads.forEach(function (t) { listBox.appendChild(rowFor(t)); });
+      });
+    }
+
+    function loadReports() {
+      if (!reportBox) return;
+      request('admin/reports', { auth: true }).then(function (res) {
+        reportBox.innerHTML = '';
+        var reports = (res.ok && res.data.reports) || [];
+        if (!reports.length) {
+          reportBox.innerHTML = '<div class="admin-empty">没有举报。</div>';
+          return;
+        }
+        reports.forEach(function (r) {
+          var row = document.createElement('div');
+          row.className = 'admin-row';
+          var main = document.createElement('div');
+          main.className = 'admin-row-main';
+          var title = document.createElement('div');
+          title.className = 'admin-row-title';
+          title.textContent = (r.status === 'open' ? '[待处理] ' : '[已处理] ') + '举报 #' + r.id;
+          var meta = document.createElement('div');
+          meta.className = 'admin-row-meta';
+          meta.textContent = (r.thread_title || ('主题 #' + r.target_id)) + ' · 举报人 ' + (r.reporter || '匿名') + ' · ' + r.reason;
+          main.appendChild(title);
+          main.appendChild(meta);
+          var actions = document.createElement('div');
+          actions.className = 'admin-row-actions';
+          if (r.status === 'open') {
+            var done = document.createElement('button');
+            done.type = 'button';
+            done.className = 'btn btn-sm btn-ghost';
+            done.textContent = '标记已处理';
+            done.addEventListener('click', function () {
+              request('admin/reports/' + r.id + '/close', { method: 'POST', auth: true }).then(function () { loadReports(); });
+            });
+            actions.appendChild(done);
+          }
+          row.appendChild(main);
+          row.appendChild(actions);
+          reportBox.appendChild(row);
+        });
+      });
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-admin-filter]'), function (b) {
+      b.addEventListener('click', function () { load(b.getAttribute('data-admin-filter')); });
+    });
+
+    if (!token()) {
+      showNotice('请先用管理员账号登录，再回到本页。');
+      return;
+    }
+    request('auth/me', { auth: true }).then(function (res) {
+      if (!res.ok || !res.data.user || res.data.user.role !== 'admin') {
+        showNotice('当前账号不是管理员。请退出后用管理员账号登录。');
+        return;
+      }
+      setHidden(notice, true);
+      setHidden(content, false);
+      load('pending');
+      loadReports();
+    }).catch(function () { showNotice('无法连接 API，请稍后再试。'); });
+  }
+
   function boot() {
     initForms();
     initLogout();
@@ -431,6 +593,7 @@
     initSearch();
     initViewBeacon();
     initDynamicFallback();
+    initAdminPage();
     if (token()) {
       request('auth/me', { auth: true }).then(function (res) {
         if (res.ok && res.data && res.data.user) applyUser(res.data.user);

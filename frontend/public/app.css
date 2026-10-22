@@ -2410,3 +2410,135 @@ input[type="radio"] {
 }
 
 
+
+/* 管理后台 */
+.nav-admin {
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
+.btn-danger {
+  background: #fff;
+  border-color: #f0c9c4;
+  color: var(--danger);
+}
+
+.btn-danger:hover {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.admin-panel {
+  margin-top: 8px;
+}
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-filter {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.admin-filter:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.admin-filter.is-active {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
+.admin-count {
+  font-size: 0.8rem;
+  color: var(--ink-4);
+}
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-xs);
+}
+
+.admin-row-main {
+  min-width: 0;
+  flex: 1 1 420px;
+}
+
+.admin-row-title {
+  display: block;
+  font-weight: 600;
+  color: var(--accent-deep);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-row-title:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.admin-row-meta {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--ink-4);
+}
+
+.admin-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-subhead {
+  margin: 28px 0 12px;
+  font-size: 1.05rem;
+}
+
+.admin-empty,
+.admin-loading {
+  padding: 20px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink-4);
+  font-size: 0.86rem;
+  text-align: center;
+}
