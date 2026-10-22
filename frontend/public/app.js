@@ -152,6 +152,7 @@
               if (submitBtn.dataset.label) submitBtn.textContent = submitBtn.dataset.label;
             }
             if (res.ok) {
+              if (res.data && res.data.token) setToken(res.data.token);
               var redirect = res.data && res.data.redirect;
               if (redirect) navigate(redirect);
               else window.location.reload();
