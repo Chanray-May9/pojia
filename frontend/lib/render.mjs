@@ -516,12 +516,12 @@ export function categoryIndexPage({ stats, categories }) {
       <div class="shell-main">
         ${categoryGrid(pagePath, categories)}
         <section class="section">
-          ${sectionHead({ eyebrow: 'GUIDELINES', title: '发帖前请先确认', id: 'guide-title' })}
+          ${sectionHead({ eyebrow: 'GUIDELINES', title: '发帖小提示', id: 'guide-title' })}
           <div class="prose"><ul>
-            <li><strong>打就打完</strong>：给出模型版本、会话结构、提示层级与完整复现步骤。</li>
-            <li><strong>标注模型</strong>：发帖时可多选目标模型；实机验证分作者自述与站务复核两级。</li>
-            <li><strong>只发真的</strong>：结论要有输入输出证据，区分实测与猜测。</li>
-            <li><strong>新板块随便开</strong>：研究方向不够用就新建板块，别把帖子硬塞进不合适的板块。</li>
+            <li><strong>写清复现条件</strong>：建议附上模型版本、会话结构、提示层级与复现步骤，方便他人验证。</li>
+            <li><strong>标注目标模型</strong>：可多选目标模型；实机验证分为「作者自述」与「站务复核」两级。</li>
+            <li><strong>结论附上依据</strong>：展示关键输入输出，并区分实测结果与推测。</li>
+            <li><strong>善用自建板块</strong>：如果没有合适的研究方向，欢迎新建板块；拿不准时也可以先发到综合讨论。</li>
           </ul></div>
         </section>
       </div>
