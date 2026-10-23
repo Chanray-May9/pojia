@@ -285,7 +285,7 @@ export function verificationBadge(thread) {
     return `<span class="verify verify-admin" title="站务已复核该主题的实机验证">实机验证 · 已复核</span>`;
   }
   if (thread.verification === 'self') {
-    return `<span class="verify verify-self" title="作者自述已在实机环境验证，未经站务复核">实机验证 · 作者自述</span>`;
+    return `<span class="verify verify-self" title="作者自述已在实机环境验证">实机验证 · 作者自述</span>`;
   }
   return '';
 }
@@ -519,7 +519,7 @@ export function categoryIndexPage({ stats, categories }) {
           ${sectionHead({ eyebrow: 'GUIDELINES', title: '发帖小提示', id: 'guide-title' })}
           <div class="prose"><ul>
             <li><strong>写清复现条件</strong>：建议附上模型版本、会话结构、提示层级与复现步骤，方便他人验证。</li>
-            <li><strong>标注目标模型</strong>：可多选目标模型；实机验证分为「作者自述」与「站务复核」两级。</li>
+            <li><strong>标注目标模型</strong>：可多选目标模型，并可标注是否已在实机环境验证。</li>
             <li><strong>结论附上依据</strong>：展示关键输入输出，并区分实测结果与推测。</li>
             <li><strong>善用自建板块</strong>：如果没有合适的研究方向，欢迎新建板块；拿不准时也可以先发到综合讨论。</li>
           </ul></div>
@@ -699,8 +699,8 @@ export function threadPage({ thread, categories }) {
             ? `<div class="verify-note">${verificationBadge(thread)}
                 <span class="verify-hint">${
                   thread.verification === 'admin'
-                    ? '该主题的实机验证由站务复核确认。'
-                    : '实机验证为作者自述，尚未经站务复核；请自行判断复现价值。'
+                    ? '该主题的实机验证已通过复核。'
+                    : '实机验证为作者自述，请自行判断复现价值。'
                 }</span></div>`
             : ''
         }
@@ -1010,8 +1010,7 @@ export function newThreadPage({ categories }) {
           <fieldset class="field verify-field">
             <legend>实机验证</legend>
             <label class="radio-option"><input type="radio" name="verification" value="none" checked> <span>未标注 — 仅理论分析或尚未实机测试</span></label>
-            <label class="radio-option"><input type="radio" name="verification" value="self"> <span>实机验证 · 作者自述 — 我已在真实模型上复现（站务可能抽检）</span></label>
-            <p class="hint">"站务复核"只能由站务在帖子发布后标记，普通用户无法选择。</p>
+            <label class="radio-option"><input type="radio" name="verification" value="self"> <span>实机验证 · 作者自述 — 我已在真实模型上复现</span></label>
           </fieldset>
           <div class="field">
             <label for="body">正文<span class="required">*</span></label>
